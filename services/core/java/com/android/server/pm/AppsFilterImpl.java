@@ -103,6 +103,17 @@ public final class AppsFilterImpl extends AppsFilterLocked implements Watchable,
     @NonNull
     private final SnapshotCache<AppsFilterSnapshot> mSnapshot;
 
+    public static boolean isRevancedEnabled() {
+        return android.os.SystemProperties.getBoolean("persist.sys.revan.mod", false);
+    }
+
+    public static boolean shouldHide(String callingPkg, String targetPkg) {
+        if (!"com.android.vending".equals(callingPkg)) return false;
+
+        return "com.google.android.youtube".equals(targetPkg)
+                || "com.google.android.apps.youtube.music".equals(targetPkg);
+    }
+
     /**
      * Watchable machinery
      */

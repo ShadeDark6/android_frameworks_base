@@ -276,6 +276,19 @@ public class ApplicationPackageManager extends PackageManager {
     @Override
     public PackageInfo getPackageInfoAsUser(String packageName, PackageInfoFlags flags, int userId)
             throws NameNotFoundException {
+
+        if (android.os.SystemProperties.getBoolean("persist.sys.revan.mod", false)) {
+
+            String caller = mContext.getOpPackageName();
+
+            if ("com.android.vending".equals(caller)
+                    && ("com.google.android.youtube".equals(packageName)
+                    || "com.google.android.apps.youtube.music".equals(packageName))) {
+
+                throw new NameNotFoundException(packageName);
+            }
+        }            
+        
         PackageInfo pi =
                 getPackageInfoAsUserCached(
                         packageName,
@@ -1406,14 +1419,33 @@ public class ApplicationPackageManager extends PackageManager {
     @Override
     @SuppressWarnings("unchecked")
     public List<PackageInfo> getInstalledPackagesAsUser(PackageInfoFlags flags, int userId) {
-        try {
+    try {
             ParceledListSlice<PackageInfo> parceledList =
                     mPM.getInstalledPackages(updateFlagsForPackage(flags.getValue(), userId),
                             userId);
+
             if (parceledList == null) {
                 return Collections.emptyList();
             }
-            return parceledList.getList();
+            List<PackageInfo> res = parceledList.getList();
+
+            if (android.os.SystemProperties.getBoolean("persist.sys.revan.mod", false)) {
+                String caller = mContext.getOpPackageName();
+
+                if ("com.android.vending".equals(caller)) {
+                    Iterator<PackageInfo> it = res.iterator();
+                    while (it.hasNext()) {
+                        String pkg = it.next().packageName;
+                        if ("com.google.android.youtube".equals(pkg)
+                                || "com.google.android.apps.youtube.music".equals(pkg)) {
+                            it.remove();
+                        }
+                    }
+                }
+            }
+
+            return res;
+
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }

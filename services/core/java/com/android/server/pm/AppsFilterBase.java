@@ -407,6 +407,36 @@ public abstract class AppsFilterBase implements AppsFilterSnapshot {
                 return true;
             }
 
+            String callingPkg = null;
+
+            if (callingSetting instanceof PackageStateInternal) {
+                AndroidPackage pkg = ((PackageStateInternal) callingSetting).getPkg();
+                if (pkg != null) {
+                    callingPkg = pkg.getPackageName();
+                }
+            } else if (callingSetting instanceof SharedUserSetting) {
+
+                ArraySet<? extends PackageStateInternal> pkgs =
+                        ((SharedUserSetting) callingSetting).getPackageStates();
+
+                for (int i = 0; i < pkgs.size(); i++) {
+                    AndroidPackage pkg = pkgs.valueAt(i).getPkg();
+                    if (pkg != null) {
+                        callingPkg = pkg.getPackageName();
+                        break;
+                    }
+                }
+            }
+
+            final String targetPkgName = targetPkgSetting.getPackageName();
+
+            if (targetPkgName != null
+                    && AppsFilterImpl.isRevancedEnabled()
+                    && AppsFilterImpl.shouldHide(callingPkg, targetPkgName)) {
+
+                return true;
+            }
+
             if (DEBUG_TRACING) {
                 Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "getAppId");
             }
